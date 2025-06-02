@@ -1,0 +1,137 @@
+{
+  "classic_prisoners_dilemma": {
+    "width": 100,
+    "height": 100,
+    "density": 0.8,
+    "steps": 300,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.5,
+    "mutation_rate": 0.01,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [0, 5],
+      "DC": [5, 0],
+      "DD": [1, 1]
+    }
+  },
+
+  "stag_hunt_game": {
+    "width": 50,
+    "height": 50,
+    "density": 0.9,
+    "steps": 200,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.6,
+    "mutation_rate": 0.02,
+    "payoff_matrix": {
+      "CC": [4, 4],
+      "CD": [0, 3],
+      "DC": [3, 0],
+      "DD": [2, 2]
+    }
+  },
+
+  "hawk_dove_game": {
+    "width": 75,
+    "height": 75,
+    "density": 0.7,
+    "steps": 250,
+    "neighborhood_type": "von_neumann",
+    "update_type": "asynchronous",
+    "initial_cooperation_rate": 0.4,
+    "mutation_rate": 0.015,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [1, 4],
+      "DC": [4, 1],
+      "DD": [0, 0]
+    }
+  },
+
+  "snowdrift_game": {
+    "width": 60,
+    "height": 60,
+    "density": 0.85,
+    "steps": 180,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.3,
+    "mutation_rate": 0.005,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [1, 4],
+      "DC": [4, 1],
+      "DD": [2, 2]
+    }
+  },
+
+  "high_temptation_pd": {
+    "width": 80,
+    "height": 80,
+    "density": 0.8,
+    "steps": 400,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.5,
+    "mutation_rate": 0.01,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [0, 7],
+      "DC": [7, 0],
+      "DD": [1, 1]
+    }
+  },
+
+  "low_punishment_pd": {
+    "width": 50,
+    "height": 50,
+    "density": 0.9,
+    "steps": 150,
+    "neighborhood_type": "von_neumann",
+    "update_type": "asynchronous",
+    "initial_cooperation_rate": 0.7,
+    "mutation_rate": 0.02,
+    "payoff_matrix": {
+      "CC": [5, 5],
+      "CD": [0, 6],
+      "DC": [6, 0],
+      "DD": [3, 3]
+    }
+  },
+
+  "small_fast_experiment": {
+    "width": 30,
+    "height": 30,
+    "density": 1.0,
+    "steps": 100,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.5,
+    "mutation_rate": 0.01,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [0, 5],
+      "DC": [5, 0],
+      "DD": [1, 1]
+    }
+  },
+
+  "large_scale_experiment": {
+    "width": 150,
+    "height": 150,
+    "density": 0.6,
+    "steps": 500,
+    "neighborhood_type": "moore",
+    "update_type": "synchronous",
+    "initial_cooperation_rate": 0.5,
+    "mutation_rate": 0.005,
+    "payoff_matrix": {
+      "CC": [3, 3],
+      "CD": [0, 5],
+      "DC": [5, 0],
+      "DD": [1, 1]
+    }
+  }
+}
