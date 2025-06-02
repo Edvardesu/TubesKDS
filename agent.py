@@ -3,16 +3,20 @@ import random
 from enum import Enum
 
 class Strategy(Enum):
-    COOPERATE = 1
-    DEFECT = 0
+    COOPERATE = 0
+    DEFECT = 1
 
 class PDAgent(mesa.Agent):
     """
-    Agent untuk Spatial Prisoner's Dilemma
+    Agent untuk Spatial Prisoner's Dilemma yang mengikuti algoritma website
     """
     
-    def __init__(self, unique_id, model, strategy=None):
+    def __init__(self, unique_id, model, x, y, strategy=None):
         super().__init__(unique_id, model)
+        
+        # Posisi agent di grid
+        self.x = x
+        self.y = y
         
         # Strategi agent (cooperate atau defect)
         if strategy is None:
@@ -20,152 +24,121 @@ class PDAgent(mesa.Agent):
         else:
             self.strategy = strategy
             
-        # Simpan strategi untuk update berikutnya (untuk synchronous update)
+        # Strategi untuk update berikutnya (untuk synchronous update)
         self.next_strategy = self.strategy
         
-        # Skor total dari interaksi dalam satu step
+        # Skor dari interaksi dalam satu step
         self.score = 0
-        self.total_score = 0
         
-        # Riwayat skor untuk tracking
+        # Statistik tambahan
+        self.total_score = 0
         self.score_history = []
         
-        # Statistik
-        self.cooperation_count = 0
-        self.defection_count = 0
-        self.interactions_count = 0
+    def reset_score(self):
+        """Reset skor untuk step baru"""
+        self.score = 0
+        self.next_strategy = self.strategy
         
     def get_neighbors(self):
         """
         Mendapatkan tetangga berdasarkan tipe neighborhood yang dipilih
+        Menggunakan periodic boundary conditions seperti di website
         """
+        neighbors = []
+        
         if self.model.neighborhood_type == "moore":
             # Moore neighborhood (8 tetangga termasuk diagonal)
-            neighbors = self.model.grid.get_neighbors(
-                self.pos, moore=True, include_center=False
-            )
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue  # Skip self
+                    
+                    # Periodic boundary conditions
+                    nx = (self.x + dx) % self.model.width
+                    ny = (self.y + dy) % self.model.height
+                    
+                    neighbor = self.model.get_agent_at(nx, ny)
+                    if neighbor is not None:
+                        neighbors.append(neighbor)
         else:
             # Von Neumann neighborhood (4 tetangga tanpa diagonal)
-            neighbors = self.model.grid.get_neighbors(
-                self.pos, moore=False, include_center=False
-            )
+            directions = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+            for dx, dy in directions:
+                # Periodic boundary conditions
+                nx = (self.x + dx) % self.model.width
+                ny = (self.y + dy) % self.model.height
+                
+                neighbor = self.model.get_agent_at(nx, ny)
+                if neighbor is not None:
+                    neighbors.append(neighbor)
+                    
         return neighbors
         
-    def play_game(self, other_agent):
+    def calculate_score(self):
         """
-        Bermain Prisoner's Dilemma dengan agent lain
-        Mengembalikan (skor_self, skor_other)
-        """
-        # Ambil payoff matrix dari model
-        payoff = self.model.payoff_matrix
-        
-        # Tentukan strategi masing-masing
-        my_strategy = self.strategy
-        other_strategy = other_agent.strategy
-        
-        # Hitung skor berdasarkan payoff matrix
-        if my_strategy == Strategy.COOPERATE and other_strategy == Strategy.COOPERATE:
-            my_score = payoff["CC"][0]  # Reward
-            other_score = payoff["CC"][1]
-        elif my_strategy == Strategy.COOPERATE and other_strategy == Strategy.DEFECT:
-            my_score = payoff["CD"][0]  # Sucker's payoff
-            other_score = payoff["CD"][1]  # Temptation
-        elif my_strategy == Strategy.DEFECT and other_strategy == Strategy.COOPERATE:
-            my_score = payoff["DC"][0]  # Temptation
-            other_score = payoff["DC"][1]  # Sucker's payoff
-        else:  # Defect vs Defect
-            my_score = payoff["DD"][0]  # Punishment
-            other_score = payoff["DD"][1]
-            
-        return my_score, other_score
-        
-    def interact_with_neighbors(self):
-        """
-        Berinteraksi dengan semua tetangga dan mengumpulkan skor
+        Menghitung skor berdasarkan interaksi dengan semua tetangga
+        Mengikuti algoritma yang sama dengan website
         """
         neighbors = self.get_neighbors()
         self.score = 0
-        interaction_count = 0
         
+        # Interaksi dengan setiap tetangga
         for neighbor in neighbors:
-            if isinstance(neighbor, PDAgent):
-                my_score, neighbor_score = self.play_game(neighbor)
-                self.score += my_score
-                
-                # Update statistik
-                if self.strategy == Strategy.COOPERATE:
-                    self.cooperation_count += 1
-                else:
-                    self.defection_count += 1
-                    
-                interaction_count += 1
-                
-        self.interactions_count += interaction_count
-        self.total_score += self.score
-        self.score_history.append(self.score)
-        
+            # Ambil payoff dari model berdasarkan strategi
+            my_strategy_idx = self.strategy.value
+            neighbor_strategy_idx = neighbor.strategy.value
+            
+            # Payoff matrix: [my_strategy][neighbor_strategy]
+            payoff = self.model.payoff_matrix[my_strategy_idx][neighbor_strategy_idx]
+            self.score += payoff
+            
     def determine_next_strategy(self):
         """
-        Menentukan strategi untuk step berikutnya berdasarkan perbandingan dengan tetangga
-        Menggunakan imitasi strategi tetangga terbaik
+        Menentukan strategi untuk step berikutnya
+        Mengikuti algoritma website: imitasi tetangga dengan skor tertinggi
         """
         neighbors = self.get_neighbors()
         
-        if not neighbors:
-            # Jika tidak ada tetangga, tetap dengan strategi saat ini
-            self.next_strategy = self.strategy
-            return
-            
-        # Cari tetangga dengan skor tertinggi
+        # Mulai dengan agent sendiri sebagai yang terbaik
+        best_agent = self
         best_score = self.score
-        best_strategy = self.strategy
         
+        # Cari tetangga dengan skor tertinggi
         for neighbor in neighbors:
-            if isinstance(neighbor, PDAgent) and neighbor.score > best_score:
+            if neighbor.score > best_score:
+                best_agent = neighbor
                 best_score = neighbor.score
-                best_strategy = neighbor.strategy
                 
-        # Imitasi strategi terbaik dengan sedikit noise untuk eksplorasi
-        if self.model.mutation_rate > 0:
-            if random.random() < self.model.mutation_rate:
-                # Mutasi: pilih strategi random
-                self.next_strategy = random.choice([Strategy.COOPERATE, Strategy.DEFECT])
-            else:
-                self.next_strategy = best_strategy
-        else:
-            self.next_strategy = best_strategy
-            
+        # Imitasi strategi terbaik
+        self.next_strategy = best_agent.strategy
+        
     def update_strategy(self):
         """
         Update strategi untuk synchronous update
         """
         self.strategy = self.next_strategy
+        self.total_score += self.score
+        self.score_history.append(self.score)
         
     def step(self):
         """
-        Step function untuk agent
+        Step function untuk agent - hanya menghitung skor dan menentukan strategi berikutnya
+        Update strategi dilakukan di model level
         """
-        # 1. Berinteraksi dengan tetangga
-        self.interact_with_neighbors()
-        
-        # 2. Tentukan strategi berikutnya
+        self.calculate_score()
         self.determine_next_strategy()
         
-        # 3. Jika asynchronous update, langsung update strategi
-        if self.model.update_type == "asynchronous":
-            self.update_strategy()
-            
-    def get_cooperation_rate(self):
+    def get_strategy_value(self):
         """
-        Mengembalikan tingkat kooperasi agent ini
+        Mengembalikan nilai strategi sebagai integer (untuk kompatibilitas)
         """
-        total_interactions = self.cooperation_count + self.defection_count
-        if total_interactions == 0:
-            return 0
-        return self.cooperation_count / total_interactions
+        return self.strategy.value
         
-    def reset_scores(self):
+    def set_strategy_from_value(self, value):
         """
-        Reset skor untuk step baru
+        Set strategi dari nilai integer
         """
-        self.score = 0
+        if value == 0:
+            self.strategy = Strategy.COOPERATE
+        else:
+            self.strategy = Strategy.DEFECT
